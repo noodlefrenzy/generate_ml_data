@@ -1,0 +1,24 @@
+{
+  "customers": {
+    "gender": { "dist": "cumprob", "cats": { "Unk": 0.05, "M": 0.5, "F": 0.45 } },
+    "age": { "dist": "normal", "mean": 34, "sd": 10, "min": 18, "max": 85, "digits": 0 },
+    "income_class": {
+      "dist": "cumprob", "cats": { "Low": 0.5, "Medium": 0.45, "High": 0.045, "Ultra": 0.005 }
+    },
+    "relationship_status": { "dist": "cumprob", "cats": { "Unknown": 0.3, "Single": 0.3, "Married": 0.3, "Divorced": 0.1} },
+    "years_as_customer": { "dist": "normal", "mean": 4.0, "sd": 1.2, "min": 0.5, "max": 9.0, "digits": 1 }
+  },
+  "spend": {
+    "month_lag1_dollars": { "dist": "normal", "mean": 200.0, "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
+    "month_lag2_dollars": { "dist": "normal", "mean": 200.0, "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
+    "month_lag3_dollars": { "dist": "normal", "mean": 200.0, "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
+    "month_lag1_sessions": { "dist": "normal", "mean": 5, "sd": 3, "min": 0, "max": 15, "digits": 0 },
+    "month_lag2_sessions": { "dist": "normal", "mean": 5, "sd": 3, "min": 0, "max": 15, "digits": 0 },
+    "month_lag3_sessions": { "dist": "normal", "mean": 5, "sd": 3, "min": 0, "max": 15, "digits": 0 },
+    "abandon": { "dist": "cumprob", "cats": { "Y": 0.05, "N": 0.95 } }
+  },
+  "products": {
+    "names": [ "Beans", "Spam", "Eggs", "Toast", "Bacon", "Bagels" ],
+    "ratings_dist": { "mean": 3, "sd": 1, "min": 1, "max": 5, "digits": 0 }
+  }
+}
