@@ -1,11 +1,62 @@
 {
   "customers": {
+    "Keys": [ "gender", "age", "relationship_status", "income_class", "years_as_customer" ],
     "gender": { "dist": "cumprob", "cats": { "Unk": 0.05, "M": 0.5, "F": 0.45 } },
     "age": { "dist": "normal", "mean": 34, "sd": 10, "min": 18, "max": 85, "digits": 0 },
-    "income_class": {
-      "dist": "cumprob", "cats": { "Low": 0.5, "Medium": 0.45, "High": 0.045, "Ultra": 0.005 }
+    "relationship_status": {
+      "default": {
+        "dist": "cumprob",
+        "cats": {
+          "Unknown": 0.3,
+          "Single": 0.3,
+          "Married": 0.3,
+          "Divorced": 0.1
+        }
+      },
+      "constrained": [
+        {
+          "rules": [
+            {
+              "key": 
+            }
+          ],
+          "dist": "cumprob",
+          "cats": {
+            "Unknown": 0.2,
+            "Single": 0.5,
+            "Married": 0.25,
+            "Divorced": 0.05
+          }
+        }
+      ]
     },
-    "relationship_status": { "dist": "cumprob", "cats": { "Unknown": 0.3, "Single": 0.3, "Married": 0.3, "Divorced": 0.1} },
+    "income_class": {
+      "default": {
+        "dist": "cumprob",
+        "cats": {
+          "Low": 0.5,
+          "Medium": 0.45,
+          "High": 0.045,
+          "Ultra": 0.005
+        }
+      },
+      "constrained": [{
+        "rules": [
+          {
+            "key": "relationship_status",
+            "op": "eq",
+            "val": "Single"
+          }
+        ],
+        "dist": "cumprob",
+        "cats": {
+          "Low": 0.3,
+          "Medium": 0.6,
+          "High": 0.095,
+          "Ultra": 0.005
+        }
+      }]
+    },
     "years_as_customer": { "dist": "normal", "mean": 4.0, "sd": 1.2, "min": 0.5, "max": 9.0, "digits": 1 }
   },
   "spend": {
