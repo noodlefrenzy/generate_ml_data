@@ -1,6 +1,6 @@
 {
   "customers": {
-    "Keys": [ "gender", "age", "relationship_status", "income_class", "years_as_customer" ],
+    "Keys": [ "gender", "age", "relationship_status", "education", "children", "income_class", "years_as_customer" ],
     "gender": { "dist": "cumprob", "cats": { "Unk": 0.05, "M": 0.5, "F": 0.45 } },
     "age": { "dist": "normal", "mean": 34, "sd": 10, "min": 18, "max": 85, "digits": 0 },
     "relationship_status": {
@@ -15,9 +15,12 @@
       },
       "constrained": [
         {
+          "name": "Young",
           "rules": [
             {
-              "key": 
+              "key": "age",
+              "op": "le",
+              "val": 30
             }
           ],
           "dist": "cumprob",
@@ -27,6 +30,55 @@
             "Married": 0.25,
             "Divorced": 0.05
           }
+        }
+      ]
+    },
+    "education": {
+      "dist": "cumprob",
+      "cats": {
+        "Unknown": 0.2,
+        "None": 0.1,
+        "HS": 0.5,
+        "4-Year": 0.15,
+        "Highest": 0.05
+      }
+    },
+    "children": {
+      "default": {
+        "dist": "normal", "mean": 1, "sd": 0.8, "min": 0, "max": 4, "digits": 0
+      },
+      "constrained": [
+        {
+          "name": "Married and Older",
+          "rules": [
+            {
+              "key": "relationship_status",
+              "op": "eq",
+              "val": "Married"
+            },
+            {
+              "key": "age",
+              "op": "ge",
+              "val": 35
+            }
+          ],
+          "dist": "normal", "mean": 2, "sd": 0.8, "min": 0, "max": 5, "digits": 0
+        },
+        {
+          "name": "Divorced and Older",
+          "rules": [
+            {
+              "key": "relationship_status",
+              "op": "eq",
+              "val": "Divorced"
+            },
+            {
+              "key": "age",
+              "op": "ge",
+              "val": 35
+            }
+          ],
+          "dist": "normal", "mean": 1.7, "sd": 0.8, "min": 0, "max": 5, "digits": 0
         }
       ]
     },
@@ -40,33 +92,203 @@
           "Ultra": 0.005
         }
       },
-      "constrained": [{
-        "rules": [
-          {
-            "key": "relationship_status",
-            "op": "eq",
-            "val": "Single"
+      "constrained": [
+        {
+          "name": "Single and Older",
+          "rules": [
+            {
+              "key": "relationship_status",
+              "op": "eq",
+              "val": "Single"
+            },
+            {
+              "key": "age",
+              "op": "gt",
+              "val": 40
+            }
+          ],
+          "dist": "cumprob",
+          "cats": {
+            "Low": 0.3,
+            "Medium": 0.6,
+            "High": 0.095,
+            "Ultra": 0.005
           }
-        ],
-        "dist": "cumprob",
-        "cats": {
-          "Low": 0.3,
-          "Medium": 0.6,
-          "High": 0.095,
-          "Ultra": 0.005
         }
-      }]
+      ]
     },
-    "years_as_customer": { "dist": "normal", "mean": 4.0, "sd": 1.2, "min": 0.5, "max": 9.0, "digits": 1 }
+    "years_as_customer": {
+      "default": {
+        "dist": "normal",
+        "mean": 4.0,
+        "sd": 1.2,
+        "min": 0.5,
+        "max": 9.0,
+        "digits": 1
+      },
+      "constrained": [
+        {
+          "name": "Younger",
+          "rules": [
+            {
+              "key": "age",
+              "op": "le",
+              "val": 25
+            }
+          ],
+          "dist": "normal",
+          "mean": 2.0,
+          "sd": 1.2,
+          "min": 0.5,
+          "max": 5.0,
+          "digits": 1
+        }
+      ]
+    }
   },
   "spend": {
-    "month_lag1_dollars": { "dist": "normal", "mean": 200.0, "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
-    "month_lag2_dollars": { "dist": "normal", "mean": 200.0, "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
-    "month_lag3_dollars": { "dist": "normal", "mean": 200.0, "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
-    "month_lag1_sessions": { "dist": "normal", "mean": 5, "sd": 3, "min": 0, "max": 15, "digits": 0 },
-    "month_lag2_sessions": { "dist": "normal", "mean": 5, "sd": 3, "min": 0, "max": 15, "digits": 0 },
+    "Keys": [ "month_lag3_dollars", "month_lag3_sessions", "month_lag2_dollars", "month_lag2_sessions", "month_lag1_dollars", "month_lag1_sessions", "abandon" ],
+    "month_lag3_dollars": {
+      "default": {
+        "dist": "normal",
+        "mean": 200.0,
+        "sd": 75.0,
+        "min": 0.0,
+        "max": 1000.0,
+        "digits": 2
+      },
+      "constrained": [
+        {
+          "name": "Rich",
+          "rules": [
+            {
+              "key": "income_class",
+              "op": "eq",
+              "val": "High"
+            }
+          ],
+          "dist": "normal",
+          "mean": 500.0,
+          "sd": 75.0,
+          "min": 0.0,
+          "max": 2000.0,
+          "digits": 2
+        },
+        {
+          "name": "Single and well-off",
+          "rules": [
+            {
+              "key": "income_class",
+              "op": "eq",
+              "val": "Medium"
+            },
+            {
+              "key": "relationship_status",
+              "op": "eq",
+              "val": "Single"
+            }
+          ],
+          "dist": "normal",
+          "mean": 350.0,
+          "sd": 125.0,
+          "min": 0.0,
+          "max": 1500.0,
+          "digits": 2
+        },
+        {
+          "name": "Spends on kids",
+          "rules": [
+            {
+              "key": "children",
+              "op": "ge",
+              "val": 3
+            }
+          ],
+          "dist": "normal",
+          "mean": 400.0,
+          "sd": 150.0,
+          "min": 50.0,
+          "max": 1200.0,
+          "digits": 2
+        }
+      ]
+    },
+    "month_lag2_dollars": { "dist": "normal", "mean": "month_lag3_dollars", "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
+    "month_lag1_dollars": { "dist": "normal", "mean": "month_lag2_dollars", "sd": 75.0, "min": 0.0, "max": 1000.0, "digits": 2 },
     "month_lag3_sessions": { "dist": "normal", "mean": 5, "sd": 3, "min": 0, "max": 15, "digits": 0 },
-    "abandon": { "dist": "cumprob", "cats": { "Y": 0.05, "N": 0.95 } }
+    "month_lag2_sessions": { "dist": "normal", "mean": "month_lag3_sessions", "sd": 3, "min": 0, "max": 15, "digits": 0 },
+    "month_lag1_sessions": { "dist": "normal", "mean": "month_lag2_sessions", "sd": 3, "min": 0, "max": 15, "digits": 0 },
+    "abandon": {
+      "default": {
+        "dist": "cumprob",
+        "cats": {
+          "Y": 0.05,
+          "N": 0.95
+        }
+      },
+      "constrained": [
+        {
+          "name": "Low Spending",
+          "rules": [
+            {
+              "key": "month_lag1_dollars",
+              "op": "le",
+              "val": 50.0
+            }
+          ],
+          "dist": "cumprob",
+          "cats": {
+            "Y": 0.5,
+            "N": 0.5
+          }
+        },
+        {
+          "name": "Low Attach",
+          "rules": [
+            {
+              "key": "month_lag1_sessions",
+              "op": "le",
+              "val": 2
+            }
+          ],
+          "dist": "cumprob",
+          "cats": {
+            "Y": 0.4,
+            "N": 0.6
+          }
+        },
+        {
+          "name": "Mid Spending",
+          "rules": [
+            {
+              "key": "month_lag1_dollars",
+              "op": "le",
+              "val": 150.0
+            }
+          ],
+          "dist": "cumprob",
+          "cats": {
+            "Y": 0.25,
+            "N": 0.75
+          }
+        },
+        {
+          "name": "Mid Attach",
+          "rules": [
+            {
+              "key": "month_lag1_sessions",
+              "op": "le",
+              "val": 2
+            }
+          ],
+          "dist": "cumprob",
+          "cats": {
+            "Y": 0.2,
+            "N": 0.8
+          }
+        }
+      ]
+    }
   },
   "products": {
     "names": [ "Beans", "Spam", "Eggs", "Toast", "Bacon", "Bagels" ],

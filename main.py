@@ -6,24 +6,44 @@ import pandas as pd
 
 def normal_dist(dist_conf):
     def curgen(cur_state):
-        val = np.random.normal(dist_conf['mean'], dist_conf['sd'])
+        mean = dist_conf['mean']
+        if type(mean) == str:
+            mean = cur_state[mean]
+        val = np.random.normal(mean, dist_conf['sd'])
         val = max(dist_conf['min'], min(dist_conf['max'], val))
         if dist_conf['digits'] == 0:
-            return str(int(val))
+            return int(val)
         else:
-            return '{{0:0.{}f}}'.format(dist_conf['digits']).format(val)
+            return val
     return curgen
 
+ops = {
+    'eq': lambda key, val: (lambda state: state[key] == val),
+    'lt': lambda key, val: (lambda state: state[key] < val),
+    'le': lambda key, val: (lambda state: state[key] <= val),
+    'gt': lambda key, val: (lambda state: state[key] > val),
+    'ge': lambda key, val: (lambda state: state[key] >= val),
+    'ne': lambda key, val: (lambda state: state[key] != val)
+}
+
 def build_generator(gen_conf):
-    if not 'dist' in gen_conf:
+    if 'constrained' in gen_conf:
+        constrained = []
+        for constraint in gen_conf['constrained']:
+            tests = [ops[x['op']](x['key'], x['val']) for x in constraint['rules']]
+            constrained.append({
+                'name': constraint['name'],
+                'tests': tests,
+                'dist': build_generator(constraint)
+            })
+        default_dist = build_generator(gen_conf['default'])
         def deferred_gen(cur_state):
-            kvs = [('%s:%s' % (k, v)) for k, v in cur_state.items()]
-            for kv in kvs:
-                if kv in gen_conf:
-                    print('Found kv ' + kv)
-                    return build_generator(gen_conf[kv])(cur_state)
-            print('Defaulting to default')
-            return build_generator(gen_conf['default'])(cur_state)
+            for constraint in constrained:
+                if all([test(cur_state) for test in constraint['tests']]):
+                    print('Rule "%s" matched' % constraint['name'])
+                    return constraint['dist'](cur_state)
+            #print('Defaulting to default')
+            return default_dist(cur_state)
         return deferred_gen
     if gen_conf['dist'] == 'cumprob':
         keys = sorted(gen_conf['cats'].keys())
@@ -53,7 +73,7 @@ def gen_customers(config, num_customers, output_file):
                 curval = fgen(customers[id])
                 curvals.append(curval)
                 customers[id][fname] = curval
-            outf.write(id + '\t' + '\t'.join(curvals) + '\n')
+            outf.write(id + '\t' + '\t'.join([str(x) for x in curvals]) + '\n')
     return customers
 
 def gen_products(config, customers, output_file):
@@ -73,23 +93,27 @@ def gen_abandon(config, customers, output_file):
         gens = [(k, build_generator(config[k])) for k in features]
         for id, cust in customers.items():
             curvals = []
+            curstate = customers[id].copy()
             for (fname, fgen) in gens:
-                curval = fgen(customers[id])
+                curval = fgen(curstate)
+                curstate[fname] = curval
                 curvals.append(curval)
-            outf.write(id + '\t' + '\t'.join(curvals) + '\n')
+            outf.write(id + '\t' + '\t'.join([str(x) for x in curvals]) + '\n')
 
 def main():
     parser = argparse.ArgumentParser(description='Generate ML Data.')
     parser.add_argument('-n', '--ncust', type=int, required=True,
                         help='Number of customers to generate')
     parser.add_argument('-c', '--config', required=True, help='JSON file containing distributions for various features')
-    parser.add_argument('-s', '--seed', type=int, default=1337, help='Seed value to allow deterministic random generation')
+    parser.add_argument('--seed', type=int, default=1337, help='Seed value to allow deterministic random generation')
+    parser.add_argument('-s', '--suffix', type=str, default='', help='Suffix for output files')
     args = parser.parse_args()
     np.random.seed(args.seed)
     config = json.load(open(args.config, 'r'))
-    customers = gen_customers(config['customers'], args.ncust, './customers.tsv')
-    gen_products(config['products'], customers, './products.tsv')
-    gen_abandon(config['spend'], customers, './churn.tsv')
+    suffix = '' if args.suffix == '' else ('_' + args.suffix)
+    customers = gen_customers(config['customers'], args.ncust, './customers%s.tsv' % suffix)
+    gen_products(config['products'], customers, './products%s.tsv' % suffix)
+    gen_abandon(config['spend'], customers, './churn%s.tsv' % suffix)
 
 if __name__ == "__main__":
     main()
